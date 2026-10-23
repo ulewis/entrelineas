@@ -14,7 +14,7 @@ No necesita compilación, servidor propio, base de datos, claves de API ni paque
 ## Usar con Zoom y Meet
 
 1. Abre la web con **Chrome de escritorio actualizado en Windows**.
-2. Deja seleccionado **En este equipo** para el reconocimiento local. Pulsa **Preparar idiomas**; acepta las descargas de paquetes que Chrome permita. La disponibilidad depende del navegador, sus políticas y el dispositivo.
+2. Deja seleccionado **En este equipo** para el reconocimiento local. Pulsa **Preparar idiomas**. Si el botón cambia a **Preparar voz en inglés**, púlsalo de nuevo para completar la descarga local con una nueva acción del usuario. La disponibilidad depende del navegador, sus políticas y el dispositivo.
 3. Abre Meet o Zoom web en otra pestaña.
 4. Pulsa **Conectar reunión**, selecciona la pestaña y activa **Compartir audio de la pestaña**.
 5. Si usas Zoom instalado, selecciona **Audio de Windows / Zoom instalado**, comparte una pantalla completa y activa audio del sistema si Chrome lo ofrece. También puede captar notificaciones y otro sonido del sistema. Si no está disponible, utiliza Zoom web.

@@ -5,7 +5,7 @@ const ui = Object.fromEntries(['source','mode','prepare','start','stop','status'
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const transcript = new Transcript(250);
 const nodes = new Map();
-const state = { ready: false, preparing: false, connecting: false, live: false, flushing: false, benchmarking: false, translator: null, recognizer: null, stream: null, recognitionId: 0, run: 0, restartTimer: null, flushTimer: null, clock: null, started: 0, quickEnds: 0, lastStart: 0 };
+const state = { ready: false, speechReady: false, preparing: false, connecting: false, live: false, flushing: false, benchmarking: false, translator: null, recognizer: null, stream: null, recognitionId: 0, run: 0, restartTimer: null, flushTimer: null, clock: null, started: 0, quickEnds: 0, lastStart: 0 };
 const chromeVersion = Number(navigator.userAgent.match(/(?:Chrome|Chromium)\/(\d+)/)?.[1] || 0);
 const desktop = !/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
 const support = { secure: window.isSecureContext, translation: 'Translator' in window, speech: !!Recognition, track: desktop && chromeVersion >= 135, capture: !!navigator.mediaDevices?.getDisplayMedia };
@@ -18,13 +18,13 @@ function status(message, tone = 'ready') {
 function controls() {
   const occupied = state.live || state.connecting || state.flushing;
   ui.prepare.disabled = occupied || state.preparing || state.benchmarking || !support.translation || !support.speech || !support.secure;
-  ui.prepare.textContent = state.preparing ? 'Preparando idiomas…' : state.ready ? '✓ Idiomas preparados' : '1. Preparar idiomas';
+  ui.prepare.textContent = state.preparing ? 'Preparando idiomas…' : state.ready ? '✓ Idiomas preparados' : state.translator && ui.mode.value === 'local' ? '1. Preparar voz en inglés' : '1. Preparar idiomas';
   ui.start.disabled = !state.ready || occupied || state.preparing || state.benchmarking;
   ui.start.textContent = state.connecting ? 'Selecciona el audio…' : '▶ 2. Conectar reunión';
   ui.stop.disabled = !occupied;
   ui.mode.disabled = occupied || state.preparing || state.benchmarking;
   ui.source.disabled = occupied || state.preparing || state.benchmarking;
-  ui.benchmark.disabled = !state.ready || occupied || state.benchmarking;
+  ui.benchmark.disabled = !state.translator || occupied || state.preparing || state.benchmarking;
   ui.copy.disabled = ui.download.disabled = ui.clear.disabled = transcript.rows.size === 0;
   ui.liveBadge.textContent = state.live ? 'EN VIVO' : state.flushing ? 'FINALIZANDO' : 'EN ESPERA';
   ui.liveBadge.classList.toggle('live', state.live);
@@ -58,6 +58,11 @@ async function prepareSpeech() {
   }
 }
 
+function preparationError(error, stage) {
+  const detail = error?.message || error?.name || 'Inténtalo otra vez.';
+  return new Error(`${stage}: ${detail}`);
+}
+
 async function prepare() {
   if (ui.prepare.disabled) return;
   state.preparing = true;
@@ -65,8 +70,10 @@ async function prepare() {
   status('Preparando inglés y español en tu navegador…', 'busy');
   controls();
   try {
-    // Start model creation directly from the click, while user activation is valid.
-    const translationJob = state.translator ? Promise.resolve(state.translator) : window.Translator.create({
+    // Model downloads may consume user activation. Prepare them in separate
+    // button clicks when needed instead of competing for the same gesture.
+    if (!state.translator) {
+      state.translator = await window.Translator.create({
       sourceLanguage: 'en', targetLanguage: 'es',
       monitor(monitor) {
         monitor.addEventListener('downloadprogress', event => {
@@ -74,15 +81,29 @@ async function prepare() {
           status(progress === null ? 'Descargando el traductor…' : `Descargando el traductor: ${progress} %`, 'busy');
         });
       }
-    }).then(translator => { state.translator = translator; return translator; });
-    const jobs = await Promise.allSettled([translationJob, prepareSpeech()]);
-    const failed = jobs.find(job => job.status === 'rejected');
-    if (failed) throw failed.reason;
+      }).catch(error => { throw preparationError(error, 'Preparación del traductor'); });
+      if (ui.mode.value === 'local') {
+        const available = typeof Recognition.available === 'function'
+          ? await Recognition.available({ langs: ['en-US'], processLocally: true })
+          : 'unavailable';
+        if (available !== 'available') {
+          status(available === 'unavailable'
+            ? 'Traductor listo. La voz local no está disponible; selecciona Servicio de voz de Chrome y prepara otra vez.'
+            : 'Traductor listo. Pulsa Preparar voz en inglés para completar la descarga local.');
+          return;
+        }
+        state.speechReady = true;
+      }
+    }
+    if (ui.mode.value === 'local' && !state.speechReady) {
+      await prepareSpeech().catch(error => { throw preparationError(error, 'Preparación de la voz en inglés'); });
+      state.speechReady = true;
+    }
     state.ready = true;
     ui.engine.textContent = ui.mode.value === 'local' ? 'Voz y traducción locales' : 'Voz en Chrome · traducción local';
     status('Listo. Pulsa Conectar reunión y selecciona el audio.');
   } catch (error) {
-    status(errorMessage(error), 'error');
+    status(error?.message || 'No se pudieron preparar los idiomas. Inténtalo otra vez.', 'error');
   } finally {
     state.preparing = false;
     controls();

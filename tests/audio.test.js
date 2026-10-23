@@ -11,19 +11,19 @@ class Element {
   replaceChildren() { this.children = []; }
 }
 
-async function fixture({ withAudio = true } = {}) {
+async function fixture({ withAudio = true, speechAvailable = true } = {}) {
   const ids = ['source','mode','prepare','start','stop','status','statusText','engine','privacy','sourceHint','compatibility','transcript','empty','scrollArea','copy','download','clear','benchmark','latency','time','wordCount','audioIndicator','liveBadge'];
   const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
   elements.source.value = 'tab'; elements.mode.value = 'local';
   const pageEvents = {};
   const track = { kind: 'audio', readyState: 'live', stops: 0, addEventListener() {}, stop() { this.stops++; this.readyState = 'ended'; } };
   const video = { kind: 'video', readyState: 'live', addEventListener() {}, stop() { this.readyState = 'ended'; } };
-  let captureOptions, microphoneCalls = 0;
+  let captureOptions, microphoneCalls = 0, installCalls = 0;
   const recognitions = [];
   class Recognition {
     constructor() { this.processLocally = false; recognitions.push(this); }
-    static async available() { return 'available'; }
-    static async install() { return true; }
+    static async available() { return speechAvailable ? 'available' : 'downloadable'; }
+    static async install() { installCalls++; speechAvailable = true; return true; }
     start(input) { this.input = input; this.onstart?.(); }
     emit(text, final) {
       const result = [{ transcript: text }]; result.isFinal = final;
@@ -43,7 +43,7 @@ async function fixture({ withAudio = true } = {}) {
   const originals = Object.fromEntries(Object.keys(replacements).map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   for (const [key, value] of Object.entries(replacements)) Object.defineProperty(globalThis, key, { value, configurable: true });
   await import(`../docs/app.js?test=${Math.random()}`);
-  return { elements, track, video, recognitions, capture: () => captureOptions, microphones: () => microphoneCalls,
+  return { elements, track, video, recognitions, capture: () => captureOptions, microphones: () => microphoneCalls, installs: () => installCalls,
     cleanup() {
       pageEvents.pagehide?.();
       for (const key of Object.keys(replacements)) {
@@ -85,6 +85,20 @@ test('sharing without audio stops capture and never substitutes the microphone',
     assert.equal(f.video.readyState, 'ended');
     assert.equal(f.microphones(), 0);
     assert.equal(f.elements.stop.disabled, true);
+    assert.equal(f.elements.start.disabled, false);
+  } finally { f.cleanup(); }
+});
+
+test('initial speech download waits for a separate user action after translator creation', async () => {
+  const f = await fixture({ speechAvailable: false });
+  try {
+    await f.elements.prepare.fire('click');
+    assert.equal(f.installs(), 0);
+    assert.equal(f.elements.start.disabled, true);
+    assert.match(f.elements.prepare.textContent, /Preparar voz en inglés/);
+    assert.equal(f.elements.benchmark.disabled, false);
+    await f.elements.prepare.fire('click');
+    assert.equal(f.installs(), 1);
     assert.equal(f.elements.start.disabled, false);
   } finally { f.cleanup(); }
 });
