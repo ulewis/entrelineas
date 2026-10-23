@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#143e3b">
+  <meta name="description" content="Subtítulos del audio en inglés con traducción progresiva al español para tus reuniones en Zoom y Meet.">
+  <title>EntreLíneas · Inglés a español en vivo</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar shell">
+    <a href="./" class="brand" aria-label="EntreLíneas, inicio"><img src="./favicon.svg" width="32" height="32" alt=""><span>Entre<span class="brand-light">Líneas</span></span></a>
+    <span class="top-note">ZOOM + GOOGLE MEET</span>
+    <a class="help-link" href="#ayuda">Cómo usarlo <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="shell">
+    <section class="intro" aria-labelledby="titulo">
+      <div><p class="eyebrow"><span class="small-dot"></span> INGLÉS → ESPAÑOL</p><h1 id="titulo">Sigue la conversación.<br><span>Entiende cada idea.</span></h1><p class="subtitle">El inglés que escuchas y su traducción, juntos en pantalla.</p></div>
+      <div class="intro-card"><span class="intro-icon" aria-hidden="true">Aa</span><p>Escucha en inglés.<br><strong>Lee en los dos idiomas.</strong></p><span class="subtle">Desde tu navegador</span></div>
+    </section>
+
+    <section class="setup" aria-label="Configurar la reunión">
+      <div class="setup-fields">
+        <label for="source">Fuente del audio<select id="source"><option value="tab">Pestaña de Meet / Zoom web</option><option value="system">Audio de Windows / Zoom instalado</option><option value="mic">Micrófono (para probar)</option></select></label>
+        <label for="mode">Reconocimiento de voz<select id="mode"><option value="local">En este equipo</option><option value="online">Servicio de voz de Chrome</option></select></label>
+      </div>
+      <p id="sourceHint" class="field-hint">Abre la reunión en otra pestaña. Al conectar, elígela y activa «Compartir audio de la pestaña».</p>
+      <p id="privacy" class="privacy">En modo local, el audio y el texto se procesan en tu equipo. La primera preparación puede descargar paquetes de idioma.</p>
+      <div class="setup-actions"><button id="prepare" class="button button-secondary">1. Preparar idiomas</button><button id="start" class="button button-primary" disabled><span class="play-icon" aria-hidden="true">▶</span> 2. Conectar reunión</button><button id="stop" class="button button-stop" disabled>■ Detener</button><span id="engine" class="engine">Chrome de escritorio</span></div>
+      <div id="status" class="status" role="status" aria-live="polite"><span id="statusDot" class="status-dot"></span><span id="statusText">Comprobando tu navegador…</span></div>
+    </section>
+
+    <section class="caption-area" aria-labelledby="captionsTitle">
+      <div class="caption-top"><div class="caption-title"><h2 id="captionsTitle">Tu conversación</h2><span id="liveBadge" class="badge">EN ESPERA</span></div><div class="tools"><button id="copy" class="text-button" disabled>Copiar texto</button><button id="download" class="text-button" disabled>Descargar</button><button id="clear" class="text-button" disabled>Limpiar</button></div></div>
+      <div class="column-heads"><span><i class="language-icon">EN</i> Original en inglés</span><span><i class="language-icon spanish">ES</i> Traducción al español</span></div>
+      <div id="scrollArea" class="transcript-scroll" tabindex="0" aria-label="Texto de la conversación">
+        <div id="empty" class="empty-state"><div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>Todo empieza con una voz.</h3><p>Prepara los idiomas y conecta el audio de tu reunión.<br>El texto aparecerá aquí mientras hablan.</p></div>
+        <div id="transcript"></div>
+      </div>
+      <div class="caption-footer"><span id="audioIndicator">● Audio sin conectar</span><span id="wordCount">0 palabras</span><span id="time">00:00</span></div>
+    </section>
+
+    <section class="under-panel" aria-label="Velocidad y funcionamiento"><div class="timing"><span class="timing-icon" aria-hidden="true">↯</span><div><span class="metric-label">TEXTO → ESPAÑOL</span><strong id="latency">— ms</strong></div><button id="benchmark" class="text-button" disabled>Medir traducción</button></div><p>El tiempo indicado empieza cuando llega el texto reconocido. <strong>No mide el retraso total desde el audio.</strong> Los subtítulos provisionales pueden corregirse al continuar la frase.</p></section>
+
+    <details id="ayuda" class="help"><summary>Cómo conectar Zoom o Meet <span aria-hidden="true">+</span></summary><div class="help-content"><ol><li>Abre esta página en <strong>Chrome actualizado para Windows</strong> y entra a tu reunión en otra pestaña.</li><li>Pulsa <strong>Preparar idiomas</strong>. Espera a que termine la descarga inicial, si hace falta.</li><li>Pulsa <strong>Conectar reunión</strong>, selecciona su pestaña y marca <strong>Compartir audio</strong>. En Zoom instalado, selecciona una pantalla completa y activa el audio del sistema cuando Chrome lo ofrezca.</li><li>Mantén abierta esta página. Puedes ponerla al lado de la reunión. Pulsa <strong>Detener</strong> cuando termines.</li></ol><p>Si Chrome no ofrece audio del sistema, usa Zoom desde su versión web. El micrófono es una entrada distinta del audio de los participantes.</p><p>El modo local depende de los paquetes disponibles en tu Chrome. Como alternativa opcional, el servicio de voz de Chrome envía audio a su proveedor para transcribirlo; la traducción sigue siendo local. No requiere una clave de API, pero depende de internet y de la disponibilidad del servicio.</p><p>La página no graba el audio ni envía las transcripciones a GitHub. El texto permanece en memoria hasta que lo limpies o cierres la página. Solo se guarda un archivo cuando pulsas Descargar.</p><p class="compatibility" id="compatibility"></p></div></details>
+  </main>
+  <footer class="shell footer"><span>EntreLíneas</span><span>Una reunión. Dos formas de seguirla.</span><span>EN → ES</span></footer>
+  <noscript>Activa JavaScript para reconocer y traducir el audio en este navegador.</noscript>
+</body>
+</html>

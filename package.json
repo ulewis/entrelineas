@@ -1,0 +1,7 @@
+{
+  "name": "entrelineas-en-es",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check docs/app.js && node --check docs/core.js" }
+}
